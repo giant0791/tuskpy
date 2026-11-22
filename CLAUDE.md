@@ -17,4 +17,3 @@ Single-context layout: one `CONTEXT.md` + `docs/adr/` at the repo root. See `doc
 - **Sentence Structure:** Use short, punchy, declarative sentences. Keep it to one core idea per sentence.
 - **Voice:** Always use the active voice. Avoid passive, corporate jargon, or overly verbose phrasing.
 - **Project Vocabulary:** Strictly use the domain vocabulary defined in this repository. Do not invent new shorthand or abstract terminology.
-

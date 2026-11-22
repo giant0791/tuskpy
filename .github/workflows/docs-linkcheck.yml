@@ -1,0 +1,33 @@
+# Weekly check of external links (issue #10). Never a required check.
+# A failed run sends GitHub's normal failure email.
+# External URLs change outside the repo, so a schedule is correct here.
+name: Docs link check
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Monday 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  UV_VERSION: "0.13.9"
+  UV_LOCKED: "1"
+
+jobs:
+  linkcheck:
+    name: linkcheck
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.14"
+          enable-cache: true
+      - run: uv sync --locked --group docs
+      - run: uv run sphinx-build -b linkcheck docs docs/_build/linkcheck
