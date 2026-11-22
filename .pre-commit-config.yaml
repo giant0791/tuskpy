@@ -1,0 +1,64 @@
+# All hooks are local and call `uv run`, so uv.lock pins every tool (issue #3).
+# pytest and coverage do not run here. CI runs them.
+default_install_hook_types: [pre-commit]
+repos:
+  - repo: local
+    hooks:
+      # Small file checks, from pre-commit-hooks in the dev group.
+      - id: trailing-whitespace
+        name: trailing whitespace
+        entry: uv run trailing-whitespace-fixer
+        language: system
+        types: [text]
+      - id: end-of-file-fixer
+        name: end of file
+        entry: uv run end-of-file-fixer
+        language: system
+        types: [text]
+      - id: check-yaml
+        name: YAML syntax
+        entry: uv run check-yaml
+        language: system
+        types: [yaml]
+      - id: check-toml
+        name: TOML syntax
+        entry: uv run check-toml
+        language: system
+        types: [toml]
+      - id: check-added-large-files
+        name: large files
+        entry: uv run check-added-large-files
+        language: system
+        stages: [pre-commit, manual]
+
+      # Quality gates.
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ty-check
+        name: ty check
+        entry: uv run ty check
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+      - id: lint-imports
+        name: import contracts
+        entry: uv run lint-imports
+        language: system
+        files: ^(src/|pyproject\.toml$)
+        pass_filenames: false
+      - id: uv-lock-check
+        name: uv lock --check
+        entry: uv lock --check
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false

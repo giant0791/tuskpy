@@ -1,0 +1,8 @@
+# Dependabot updates the pinned actions only (issue #5).
+# Python packages in uv.lock stay a deliberate update.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

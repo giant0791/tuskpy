@@ -1,9 +1,151 @@
 [project]
 name = "tuskpy"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.0.0"
+description = "A PostgreSQL-compatible database engine, built from scratch in Python, for learning."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.12"
-dependencies = []
+requires-python = ">=3.14"
+dependencies = [
+    "prompt-toolkit>=3.0",
+    "rich>=14.0",
+]
+
+[project.optional-dependencies]
+sqlalchemy = ["sqlalchemy>=2.0"]
+
+[project.scripts]
+tuskpy = "tuskpy.client.cli:main"
+tuskpy-server = "tuskpy.server.postmaster:main"
+
+[project.entry-points."sqlalchemy.dialects"]
+tuskpy = "tuskpy.client.api.dialect:TuskpyDialect"
+
+[dependency-groups]
+dev = [
+    "git-cliff>=2.14.2",
+    "hypothesis>=6.170.17",
+    "import-linter>=2.17",
+    "pre-commit>=4.7.0",
+    "pre-commit-hooks>=6.0.0",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.6",
+    "sqlalchemy>=2.1.9",
+    "ty==0.0.107",
+]
+docs = [
+    "furo>=2025.12.19",
+    "myst-parser>=5.2.0",
+    "sphinx>=9.2.0",
+    "sphinx-autoapi>=3.9.0",
+    "sphinx-autobuild>=2025.8.25",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.9,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv]
+required-version = "==0.13.9"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF", "N", "PT", "D", "ANN"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D1", "ANN"]
+
+# Strict ty: every rule is an error (issue #3). An untyped third-party
+# library gets a narrow per-module override, never a global lower level.
+[tool.ty.rules]
+all = "error"
+
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib"]
+xfail_strict = true
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+source_pkgs = ["tuskpy"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "^\\s*\\.\\.\\.$",
+    "@overload",
+]
+
+# Import contracts from ADR 0002. A PR that adds a dependency between
+# components changes these contracts in the same PR.
+[tool.importlinter]
+root_package = "tuskpy"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "1. Client and server share only the wire protocol"
+type = "layers"
+layers = [
+    "tuskpy.client | tuskpy.server",
+    "tuskpy.protocol",
+]
+
+[[tool.importlinter.contracts]]
+name = "2. Server ladder"
+type = "layers"
+containers = ["tuskpy.server"]
+layers = [
+    "postmaster",
+    "backend",
+    "executor",
+    "planner",
+    "analyzer",
+    "compiler",
+    "catalog | recovery",
+    "access",
+    "buffer | transaction | lock",
+    "wal",
+    "storage | shared_memory",
+    "types",
+]
+
+[[tool.importlinter.contracts]]
+name = "3. tuskpy CLI above tuskpy API"
+type = "layers"
+containers = ["tuskpy.client"]
+layers = [
+    "cli",
+    "api",
+]
+
+[[tool.importlinter.contracts]]
+name = "4a. Server and protocol import no edge library"
+type = "forbidden"
+source_modules = ["tuskpy.server", "tuskpy.protocol"]
+forbidden_modules = ["prompt_toolkit", "rich", "sqlalchemy"]
+
+[[tool.importlinter.contracts]]
+name = "4b. tuskpy API imports no CLI library"
+type = "forbidden"
+source_modules = ["tuskpy.client.api"]
+forbidden_modules = ["prompt_toolkit", "rich"]
+
+[[tool.importlinter.contracts]]
+name = "4c. Only the dialect imports sqlalchemy"
+type = "forbidden"
+source_modules = ["tuskpy.client"]
+forbidden_modules = ["sqlalchemy"]
+ignore_imports = [
+    "tuskpy.client.api.dialect -> sqlalchemy",
+    "tuskpy.client.api.dialect.** -> sqlalchemy",
+]
+# The dialect has no submodules yet, so the wildcard line matches nothing.
+unmatched_ignore_imports_alerting = "none"

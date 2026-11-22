@@ -53,4 +53,4 @@ The tusk is a nod to the PostgreSQL elephant, and `py` is for Python. tuskpy is 
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+MIT. See [`LICENSE`](https://github.com/giant0791/tuskpy/blob/main/LICENSE).
