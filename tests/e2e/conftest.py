@@ -36,6 +36,8 @@ def start_server() -> Iterator[Callable[[list[str]], int]]:
 
     yield _start
 
+    errors: list[str] = []
+
     for proc in processes:
         killed = False
         proc.terminate()
@@ -52,10 +54,14 @@ def start_server() -> Iterator[Callable[[list[str]], int]]:
             proc.stdout.close()
 
         if killed:
-            pytest.fail(
-                f"server did not exit within {TERM_TIMEOUT_SECONDS} s "
-                "after SIGTERM, killed with SIGKILL"
+            errors.append(
+                f"server (pid {proc.pid}) did not exit within "
+                f"{TERM_TIMEOUT_SECONDS} s after SIGTERM, killed with SIGKILL"
+            )
+        elif returncode != 0:
+            errors.append(
+                f"server (pid {proc.pid}) exited with status {returncode} after SIGTERM"
             )
 
-        if returncode != 0:
-            pytest.fail(f"server exited with status {returncode} after SIGTERM")
+    if errors:
+        pytest.fail("\n".join(errors))
